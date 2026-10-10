@@ -20,6 +20,7 @@ from sklearn.dummy import DummyClassifier
 from sklearn.ensemble import HistGradientBoostingClassifier
 from sklearn.frozen import FrozenEstimator
 from sklearn.linear_model import LogisticRegression
+from sklearn.inspection import permutation_importance
 from sklearn.metrics import (
     average_precision_score,
     brier_score_loss,
@@ -191,14 +192,18 @@ def train_and_evaluate():
     # 8. Compute Global Feature Importance using SHAP
     logger.info("Computing global feature importance via SHAP...")
     sample_val = X_val.iloc[:1000]
-    tree_explainer = shap.TreeExplainer(hgb)
-    shap_vals = tree_explainer.shap_values(sample_val)
-    mean_abs_shap = np.abs(shap_vals).mean(axis=0)
-
-    importance_dict = {
-        col: round(float(val), 6)
-        for col, val in zip(FEATURE_COLUMNS, mean_abs_shap)
-    }
+    try:
+        tree_explainer = shap.TreeExplainer(hgb)
+        shap_vals = tree_explainer.shap_values(sample_val)
+        mean_abs_shap = np.abs(shap_vals).mean(axis=0)
+        importance_dict = {col: round(float(val), 6) for col, val in zip(FEATURE_COLUMNS, mean_abs_shap)}
+    except Exception as exc:
+        logger.warning("SHAP global importance failed (%s); using held-out permutation importance", exc)
+        perm = permutation_importance(hgb, sample_val, y_val.iloc[:len(sample_val)],
+                                      scoring="average_precision", n_repeats=5,
+                                      random_state=RANDOM_SEED, n_jobs=-1)
+        importance_dict = {col: round(float(max(0.0, val)), 6)
+                           for col, val in zip(FEATURE_COLUMNS, perm.importances_mean)}
     # Sort descending
     sorted_importance = dict(sorted(importance_dict.items(), key=lambda item: item[1], reverse=True))
 
@@ -225,6 +230,9 @@ def train_and_evaluate():
         "feature_columns": list(FEATURE_COLUMNS),
         "threshold": best_threshold,
         "risk_tiers": risk_tiers,
+        "training_ranges": {col: {"min": float(X_train[col].min()), "max": float(X_train[col].max())}
+                            for col in FEATURE_COLUMNS},
+        "training_medians": {col: float(X_train[col].median()) for col in FEATURE_COLUMNS},
     }
     model_path = MODELS_DIR / "model.joblib"
     joblib.dump(pipeline_artifact, model_path, compress=3)
