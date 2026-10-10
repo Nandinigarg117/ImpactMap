@@ -36,6 +36,7 @@ class ImpactEvidence:
     is_broken_import: bool = False
     broken_import_details: Optional[str] = None
     is_paths_capped: bool = False
+    seed_distances: Dict[str, int] = field(default_factory=dict)
 
 
 @dataclass
@@ -277,6 +278,8 @@ def analyze_impact(
             is_broken_import=is_broken,
             broken_import_details=broken_details,
             is_paths_capped=is_cap,
+            seed_distances={seed: nx.shortest_path_length(g_curr, node, seed)
+                            for seed in seeds if seed in g_curr and nx.has_path(g_curr, node, seed)},
         )
 
     total_nodes = g_curr.number_of_nodes()
