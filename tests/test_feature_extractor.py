@@ -62,6 +62,44 @@ def test_extract_commit_features(tmp_path: Path):
     assert mod_features.values["aexp"] >= 1.0  # Author has at least 1 prior commit
 
 
+def test_commit_metrics_match_hand_calculation(tmp_path: Path):
+    repo_dir = tmp_path / "metrics_repo"
+    repo_dir.mkdir()
+    repo = git.Repo.init(repo_dir, b="main")
+    with repo.config_writer() as config:
+        config.set_value("user", "name", "Metric Author")
+        config.set_value("user", "email", "metric@example.com")
+    files = {
+        "src/one/a.py": "a\nb\nc\n",
+        "src/two/b.py": "x\ny\n",
+        "tests/c.py": "q\n",
+    }
+    for name, content in files.items():
+        path = repo_dir / name
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(content, encoding="utf-8")
+    repo.git.add(all=True)
+    repo.index.commit("initial")
+    changed = {
+        "src/one/a.py": "a\nnew\nc\nextra\n",  # +2, -1
+        "src/two/b.py": "x\nz\n",               # +1, -1
+        "tests/c.py": "q\nr\ns\nt\n",           # +3, -0
+    }
+    for name, content in changed.items():
+        (repo_dir / name).write_text(content, encoding="utf-8")
+    repo.git.add(all=True)
+    commit = repo.index.commit("known metrics")
+
+    features = extract_commit_features(repo, commit.hexsha).values
+    assert features["la"] == 6.0
+    assert features["ld"] == 2.0
+    assert features["nf"] == 3.0
+    assert features["nd"] == 3.0
+    assert features["ns"] == 2.0
+    expected_entropy = -(3 / 8 * math.log2(3 / 8) + 2 / 8 * math.log2(2 / 8) + 3 / 8 * math.log2(3 / 8))
+    assert features["ent"] == round(expected_entropy, 6)
+
+
 def test_schema_parity():
     # Load schema json
     schema_path = Path("models/feature_schema.json")

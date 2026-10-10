@@ -152,3 +152,23 @@ def test_get_file_diff_patch(tmp_path: Path):
     assert "def sub(a, b):" in patch
     assert "---" in patch
     assert "+++" in patch
+
+
+def test_missing_parent_is_reported_as_truncated_history(tmp_path: Path, monkeypatch):
+    builder = GitRepoBuilder(tmp_path / "repo")
+    commits = builder.build_standard_repo()
+    repo = git.Repo(tmp_path / "repo")
+    commit = repo.commit(commits["modify"])
+    parent_sha = commit.parents[0].hexsha
+    real_commit = repo.commit
+
+    def missing_parent(rev=None, *args, **kwargs):
+        if rev == parent_sha:
+            raise ValueError("parent is outside shallow history")
+        return real_commit(rev, *args, **kwargs)
+
+    monkeypatch.setattr(repo, "commit", missing_parent)
+    summary = analyze_commit_diff(repo, commits["modify"])
+    assert summary.has_truncated_history is True
+    assert summary.is_initial_commit is True
+    assert summary.files_changed_count > 0

@@ -41,6 +41,7 @@ def complex_repo(tmp_path: Path) -> git.Repo:
 
     # 2. Leaf module c
     (src_pkg / "c.py").write_text("C_VALUE = 42\n", encoding="utf-8")
+    (src_pkg / "submodule.py").write_text("SUBMODULE_VALUE = 1\n", encoding="utf-8")
 
     # 3. Middle module b (imports c via relative import, plus external stdlib os)
     (src_pkg / "b.py").write_text(
@@ -50,7 +51,7 @@ def complex_repo(tmp_path: Path) -> git.Repo:
 
     # 4. Top module a (imports b via absolute import and external json)
     (src_pkg / "a.py").write_text(
-        "import json\nimport pkg.b\nfrom pkg.b import get_b\n\ndef run():\n    return get_b()\n",
+        "import json\nimport pkg.b\nfrom pkg.b import get_b\nfrom pkg import sub\nfrom pkg import submodule\n\ndef run():\n    return get_b()\n",
         encoding="utf-8",
     )
 
@@ -97,7 +98,23 @@ def test_build_dependency_graph(complex_repo: git.Repo):
     # Verify exclusions: venv file must NOT be in graph
     assert "venv/ignored.py" not in g
 
-    # Verify exact expected edges:
+    # Verify the complete edge set. Importing a child package executes both
+    # its parent package initializer and the child package initializer.
+    assert set(g.edges) == {
+        ("src/pkg/__init__.py", "src/pkg/c.py"),
+        ("src/pkg/a.py", "src/pkg/b.py"),
+        ("src/pkg/a.py", "src/pkg/__init__.py"),
+        ("src/pkg/a.py", "src/pkg/sub/__init__.py"),
+        ("src/pkg/a.py", "src/pkg/submodule.py"),
+        ("src/pkg/b.py", "src/pkg/c.py"),
+        ("src/pkg/sub/nested.py", "src/pkg/c.py"),
+        ("src/pkg/sub/nested.py", "src/pkg/b.py"),
+        ("src/pkg/circ1.py", "src/pkg/circ2.py"),
+        ("src/pkg/circ1.py", "src/pkg/__init__.py"),
+        ("src/pkg/circ2.py", "src/pkg/circ1.py"),
+        ("src/pkg/circ2.py", "src/pkg/__init__.py"),
+        ("src/pkg/sub/nested.py", "src/pkg/__init__.py"),
+    }
     # A -> B (a imports b)
     assert g.has_edge("src/pkg/a.py", "src/pkg/b.py")
     assert "import pkg.b" in g["src/pkg/a.py"]["src/pkg/b.py"]["import_statements"]
@@ -130,6 +147,21 @@ def test_build_dependency_graph(complex_repo: git.Repo):
     # Unresolved import recorded
     assert "src/pkg/caller_unresolved.py" in result.unresolved_imports
     assert "pkg.non_existent_module" in result.unresolved_imports["src/pkg/caller_unresolved.py"]
+    assert result.external_imports["json"] == 1
+    assert result.unresolved_imports["src/pkg/caller_unresolved.py"] == ["pkg.non_existent_module"]
+
+
+def test_empty_and_non_python_repositories_have_empty_graph(tmp_path: Path):
+    repo_dir = tmp_path / "docs_only"
+    repo_dir.mkdir()
+    repo = git.Repo.init(repo_dir, b="main")
+    (repo_dir / "README.md").write_text("docs only\n", encoding="utf-8")
+    repo.git.add(all=True)
+    commit = repo.index.commit("docs only")
+    result = build_dependency_graph(repo, commit.hexsha, use_cache=False)
+    assert result.total_nodes == 0
+    assert result.total_edges == 0
+    assert set(result.graph.edges) == set()
 
 
 def test_dependency_graph_caching(complex_repo: git.Repo):

@@ -218,6 +218,9 @@ def resolve_import(
             cand_sub = f"{prefix}/{imp.imported_name}.py".strip("/")
             if cand_sub in known_files:
                 candidates.append(cand_sub)
+            cand_sub_package = f"{prefix}/{imp.imported_name}/__init__.py".strip("/")
+            if cand_sub_package in known_files and cand_sub_package not in candidates:
+                candidates.append(cand_sub_package)
 
         # Check module as file
         cand_file = f"{prefix}.py".strip("/")
@@ -250,6 +253,9 @@ def resolve_import(
             sub_path = f"{root_prefix}{mod_path}/{imp.imported_name}.py"
             if sub_path in known_files and sub_path not in resolved_candidates:
                 resolved_candidates.append(sub_path)
+            sub_package_path = f"{root_prefix}{mod_path}/{imp.imported_name}/__init__.py"
+            if sub_package_path in known_files and sub_package_path not in resolved_candidates:
+                resolved_candidates.append(sub_package_path)
 
         # Check direct module .py
         direct_file = f"{root_prefix}{mod_path}.py"
