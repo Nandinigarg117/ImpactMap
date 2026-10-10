@@ -74,5 +74,4 @@ tmp/
 .cloned_repos/
 *.log
 
-# Large model artifacts if exceeding repo size (JSON metadata is tracked)
-# models/*.joblib
+# The compact inference artifact models/model.joblib is intentionally tracked.
