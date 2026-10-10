@@ -120,5 +120,11 @@ class AppConfig:
     def config_hash(self) -> str:
         """Hash representation of active configuration for cache invalidation."""
         import hashlib
-        payload = f"{self.max_file_bytes}_{self.max_files}_{self.max_depth}_{sorted(self.excluded_dirs)}"
-        return hashlib.sha256(payload.encode("utf-8")).hexdigest()[:12]
+        import json
+        from dataclasses import asdict
+        values = asdict(self)
+        values["excluded_dirs"] = sorted(self.excluded_dirs)
+        values["allowed_local_roots"] = sorted(str(p) for p in self.allowed_local_roots)
+        values["allowed_remote_hosts"] = list(self.allowed_remote_hosts)
+        payload = json.dumps(values, sort_keys=True, default=str)
+        return hashlib.sha256(payload.encode("utf-8")).hexdigest()[:16]
