@@ -85,6 +85,11 @@ PRIORITY_TIER_THRESHOLDS: Dict[str, float] = {
     "High": 0.45,
     "Medium": 0.20,
 }
+# A higher commit risk lowers the High boundary by at most this amount. This
+# changes tier labels; commit_risk itself remains a shared per-commit feature.
+COMMIT_RISK_HIGH_TIER_SHIFT: float = 0.15
+# Explicit additional evidence for imports broken by a removed/renamed module.
+BROKEN_IMPORT_BOOST: float = 0.15
 
 # Commit Risk Tier Thresholds
 COMMIT_RISK_TIER_THRESHOLDS: Dict[str, float] = {
