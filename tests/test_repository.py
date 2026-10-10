@@ -146,3 +146,17 @@ def test_list_python_files_in_commit(tmp_path: Path):
     assert "src/pkg/calc.py" in py_files
     assert "tests/test_calc.py" in py_files
     assert "README.md" not in py_files
+
+
+def test_python_file_limit_is_reported(tmp_path: Path):
+    builder = GitRepoBuilder(tmp_path / "repo")
+    commits = builder.build_standard_repo()
+    repo = git.Repo(tmp_path / "repo")
+    files, truncated = list_python_files_in_commit(repo.commit(commits["merge"]), max_files=2)
+    assert len(files) == 2
+    assert truncated is True
+
+
+def test_remote_url_unknown_subdomain_is_rejected():
+    with pytest.raises(InvalidRepositoryURLError):
+        validate_remote_url("https://github.com.attacker.example/owner/repo.git")

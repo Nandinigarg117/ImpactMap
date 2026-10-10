@@ -150,3 +150,27 @@ def test_dependencies_of_changed_files_context(impact_test_repo: git.Repo):
 
     # c.py does not import anything in this repo
     assert res.dependencies_of_changed.get("src/c.py") == []
+
+
+def test_rename_mapping_finds_dependents_that_keep_old_import(tmp_path: Path):
+    repo_dir = tmp_path / "rename_repo"
+    repo_dir.mkdir()
+    repo = git.Repo.init(repo_dir, b="main")
+    (repo_dir / "src/pkg").mkdir(parents=True)
+    (repo_dir / "src/pkg/__init__.py").write_text("", encoding="utf-8")
+    (repo_dir / "src/pkg/old_name.py").write_text("VALUE = 1\n", encoding="utf-8")
+    (repo_dir / "src/pkg/caller.py").write_text("import pkg.old_name\n", encoding="utf-8")
+    repo.git.add(all=True)
+    repo.index.commit("base")
+
+    repo.git.mv("src/pkg/old_name.py", "src/pkg/new_name.py")
+    repo.index.commit("rename module without updating caller")
+    summary = analyze_commit_diff(repo, repo.head.commit.hexsha)
+    renamed = next(fc for fc in summary.file_changes if fc.status == "renamed")
+    assert (renamed.old_path, renamed.path) == ("src/pkg/old_name.py", "src/pkg/new_name.py")
+
+    result = analyze_impact(repo, summary)
+    caller = result.evidence_records["src/pkg/caller.py"]
+    assert caller.category == "direct"
+    assert caller.is_broken_import is True
+    assert "renamed to 'src/pkg/new_name.py'" in caller.broken_import_details
