@@ -79,6 +79,8 @@ python scripts/train_model.py
 python scripts/evaluate_model.py
 ```
 
+These three commands were run successfully on 2026-10-10 in an isolated checkout with a fresh Python 3.13.9 virtual environment installed from `requirements.txt`. Dataset preparation used the script's existing local scratch copy, produced 106,674 cleaned rows, and wrote the 74,671/16,001/16,002 chronological splits. Training and evaluation completed; their generated model files remained in the temporary checkout and did not replace the checked-in artifacts above. This verifies command execution with the available cached dataset; it does not verify that the upstream download URL is currently reachable or establish dataset reuse rights.
+
 Preparation writes ignored files under `data/raw/` and `data/processed/`. Training writes `models/model.joblib`, `models/metrics.json`, `models/risk_tiers.json`, and `models/global_importance.json`. The evaluator requires `data/processed/test.csv`. These outputs can replace tracked model metadata and artifacts; review `git status` and diffs after running training.
 
 ### Saved test-set metrics
