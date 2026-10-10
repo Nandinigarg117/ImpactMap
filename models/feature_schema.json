@@ -1,0 +1,195 @@
+{
+  "schema_version": "1.0.0",
+  "target_column": "buggy",
+  "feature_columns": [
+    "la",
+    "ld",
+    "nf",
+    "nd",
+    "ns",
+    "ent",
+    "ndev",
+    "age",
+    "nuc",
+    "aexp"
+  ],
+  "feature_dtypes": {
+    "la": "int64",
+    "ld": "int64",
+    "nf": "int64",
+    "nd": "int64",
+    "ns": "int64",
+    "ent": "float64",
+    "ndev": "float64",
+    "age": "float64",
+    "nuc": "float64",
+    "aexp": "int64"
+  },
+  "feature_descriptions": {
+    "la": "Lines added across all modified files in the commit.",
+    "ld": "Lines deleted across all modified files in the commit.",
+    "nf": "Number of files modified in the commit.",
+    "nd": "Number of directories modified in the commit.",
+    "ns": "Number of top-level subsystems touched by the commit.",
+    "ent": "Shannon entropy (base 2) measuring how diffusely changes are spread across files.",
+    "ndev": "Average number of distinct past developers who previously changed the touched files.",
+    "age": "Average age (in days) since the modified files were last touched.",
+    "nuc": "Average number of prior commits that previously modified the touched files.",
+    "aexp": "Number of prior commits authored by this developer in the repository."
+  },
+  "compatibility_table": [
+    {
+      "name": "la",
+      "description": "Lines added",
+      "available_in_dataset": true,
+      "reconstructible_at_inference": "yes",
+      "leakage_risk": "none",
+      "decision": "use",
+      "definition": "sum(file.lines_added) from commit diff numstat"
+    },
+    {
+      "name": "ld",
+      "description": "Lines deleted",
+      "available_in_dataset": true,
+      "reconstructible_at_inference": "yes",
+      "leakage_risk": "none",
+      "decision": "use",
+      "definition": "sum(file.lines_deleted) from commit diff numstat"
+    },
+    {
+      "name": "nf",
+      "description": "Number of modified files",
+      "available_in_dataset": true,
+      "reconstructible_at_inference": "yes",
+      "leakage_risk": "none",
+      "decision": "use",
+      "definition": "count(modified_files) from commit diff"
+    },
+    {
+      "name": "nd",
+      "description": "Number of modified directories",
+      "available_in_dataset": true,
+      "reconstructible_at_inference": "yes",
+      "leakage_risk": "none",
+      "decision": "use",
+      "definition": "count(distinct parent directories of modified files)"
+    },
+    {
+      "name": "ns",
+      "description": "Number of modified subsystems",
+      "available_in_dataset": true,
+      "reconstructible_at_inference": "yes",
+      "leakage_risk": "none",
+      "decision": "use",
+      "definition": "count(distinct top-level directories of modified files)"
+    },
+    {
+      "name": "ent",
+      "description": "Entropy of change",
+      "available_in_dataset": true,
+      "reconstructible_at_inference": "yes",
+      "leakage_risk": "none",
+      "decision": "use",
+      "definition": "-sum(p_i * log2(p_i)) where p_i = churn_i / sum(churn)"
+    },
+    {
+      "name": "ndev",
+      "description": "Number of developers",
+      "available_in_dataset": true,
+      "reconstructible_at_inference": "yes",
+      "leakage_risk": "none",
+      "decision": "use",
+      "definition": "mean distinct past authors who previously touched the modified files"
+    },
+    {
+      "name": "age",
+      "description": "File age in days",
+      "available_in_dataset": true,
+      "reconstructible_at_inference": "yes",
+      "leakage_risk": "none",
+      "decision": "use",
+      "definition": "mean days between current commit and previous commit touching each file"
+    },
+    {
+      "name": "nuc",
+      "description": "Number of unique changes",
+      "available_in_dataset": true,
+      "reconstructible_at_inference": "yes",
+      "leakage_risk": "none",
+      "decision": "use",
+      "definition": "mean count of prior commits that touched each modified file"
+    },
+    {
+      "name": "aexp",
+      "description": "Author experience",
+      "available_in_dataset": true,
+      "reconstructible_at_inference": "yes",
+      "leakage_risk": "none",
+      "decision": "use",
+      "definition": "count of prior commits authored by this developer in repository"
+    },
+    {
+      "name": "arexp",
+      "description": "Author recent experience",
+      "available_in_dataset": true,
+      "reconstructible_at_inference": "no",
+      "leakage_risk": "none",
+      "decision": "drop",
+      "definition": "Decayed author experience; exact decay constant not reproducible across tools"
+    },
+    {
+      "name": "asexp",
+      "description": "Author subsystem experience",
+      "available_in_dataset": true,
+      "reconstructible_at_inference": "no",
+      "leakage_risk": "none",
+      "decision": "drop",
+      "definition": "Author subsystem experience; weighting not reproducible across tools"
+    },
+    {
+      "name": "fix",
+      "description": "Fix linkage indicator",
+      "available_in_dataset": true,
+      "reconstructible_at_inference": "no",
+      "leakage_risk": "high",
+      "decision": "drop",
+      "definition": "Linked to JIRA/GitHub issue tracker; not available at general commit time"
+    },
+    {
+      "name": "year",
+      "description": "Commit year",
+      "available_in_dataset": true,
+      "reconstructible_at_inference": "partial",
+      "leakage_risk": "high",
+      "decision": "drop",
+      "definition": "Temporal shortcut causing non-stationary artifacts"
+    },
+    {
+      "name": "author_date",
+      "description": "Commit timestamp",
+      "available_in_dataset": true,
+      "reconstructible_at_inference": "partial",
+      "leakage_risk": "high",
+      "decision": "drop",
+      "definition": "Used only for time-aware train/val/test splitting, not as model feature"
+    },
+    {
+      "name": "commit_id",
+      "description": "Git commit SHA",
+      "available_in_dataset": true,
+      "reconstructible_at_inference": "yes",
+      "leakage_risk": "high",
+      "decision": "drop",
+      "definition": "Arbitrary unique identifier"
+    },
+    {
+      "name": "project",
+      "description": "Project identifier",
+      "available_in_dataset": true,
+      "reconstructible_at_inference": "no",
+      "leakage_risk": "high",
+      "decision": "drop",
+      "definition": "Domain identity feature that prevents cross-project generalization"
+    }
+  ]
+}
