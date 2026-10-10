@@ -1,0 +1,214 @@
+{
+  "model_version": "1.0.0",
+  "timestamp_utc": "2026-10-10T07:39:00.287514+00:00",
+  "random_seed": 42,
+  "library_versions": {
+    "scikit_learn": "1.7.2",
+    "shap": "0.53.0",
+    "pandas": "2.3.3",
+    "numpy": "2.3.5"
+  },
+  "dataset": {
+    "name": "ApacheJIT",
+    "source": "https://github.com/hosseinkshvrz/apachejit",
+    "train_rows": 74671,
+    "val_rows": 16001,
+    "test_rows": 16002,
+    "test_positive_base_rate": 0.1366,
+    "split_type": "time-aware (70/15/15 by author_date)"
+  },
+  "evaluation": {
+    "primary_model_hgb_calibrated": {
+      "pr_auc": 0.3861,
+      "roc_auc": 0.806,
+      "precision": 0.2999,
+      "recall": 0.726,
+      "f1": 0.4244,
+      "brier_score": 0.1163,
+      "threshold_used": 0.3,
+      "confusion_matrix": {
+        "tn": 10111,
+        "fp": 3705,
+        "fn": 599,
+        "tp": 1587
+      }
+    },
+    "baseline_logistic_regression": {
+      "pr_auc": 0.3824,
+      "roc_auc": 0.7995,
+      "precision": 0.2547,
+      "recall": 0.8124,
+      "f1": 0.3878,
+      "brier_score": 0.2193,
+      "threshold_used": 0.5,
+      "confusion_matrix": {
+        "tn": 8619,
+        "fp": 5197,
+        "fn": 410,
+        "tp": 1776
+      }
+    },
+    "baseline_churn_heuristic": {
+      "pr_auc": 0.2752,
+      "roc_auc": 0.7557,
+      "precision": 0.2135,
+      "recall": 0.876,
+      "f1": 0.3434,
+      "brier_score": 0.3103,
+      "threshold_used": 0.5,
+      "confusion_matrix": {
+        "tn": 6763,
+        "fp": 7053,
+        "fn": 271,
+        "tp": 1915
+      }
+    },
+    "baseline_dummy_prior": {
+      "pr_auc": 0.1366,
+      "roc_auc": 0.5,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "brier_score": 0.1424,
+      "threshold_used": 0.5,
+      "confusion_matrix": {
+        "tn": 13816,
+        "fp": 0,
+        "fn": 2186,
+        "tp": 0
+      }
+    }
+  },
+  "error_analysis": {
+    "by_size_bucket": {
+      "small (<=20)": {
+        "total": 4752,
+        "false_positives": 10,
+        "false_negatives": 121,
+        "fp_rate": 0.0021,
+        "fn_rate": 0.0255
+      },
+      "medium (21-200)": {
+        "total": 6528,
+        "false_positives": 1274,
+        "false_negatives": 374,
+        "fp_rate": 0.1952,
+        "fn_rate": 0.0573
+      },
+      "large (>200)": {
+        "total": 4722,
+        "false_positives": 2421,
+        "false_negatives": 104,
+        "fp_rate": 0.5127,
+        "fn_rate": 0.022
+      }
+    },
+    "by_project": {
+      "apache/activemq": {
+        "total": 139,
+        "false_positives": 22,
+        "false_negatives": 2,
+        "fp_rate": 0.1583,
+        "fn_rate": 0.0144
+      },
+      "apache/camel": {
+        "total": 3785,
+        "false_positives": 449,
+        "false_negatives": 68,
+        "fp_rate": 0.1186,
+        "fn_rate": 0.018
+      },
+      "apache/cassandra": {
+        "total": 170,
+        "false_positives": 43,
+        "false_negatives": 8,
+        "fp_rate": 0.2529,
+        "fn_rate": 0.0471
+      },
+      "apache/flink": {
+        "total": 3569,
+        "false_positives": 766,
+        "false_negatives": 172,
+        "fp_rate": 0.2146,
+        "fn_rate": 0.0482
+      },
+      "apache/groovy": {
+        "total": 678,
+        "false_positives": 95,
+        "false_negatives": 31,
+        "fp_rate": 0.1401,
+        "fn_rate": 0.0457
+      },
+      "apache/hadoop": {
+        "total": 2983,
+        "false_positives": 1147,
+        "false_negatives": 0,
+        "fp_rate": 0.3845,
+        "fn_rate": 0.0
+      },
+      "apache/hadoop-hdfs": {
+        "total": 122,
+        "false_positives": 1,
+        "false_negatives": 38,
+        "fp_rate": 0.0082,
+        "fn_rate": 0.3115
+      },
+      "apache/hadoop-mapreduce": {
+        "total": 9,
+        "false_positives": 0,
+        "false_negatives": 2,
+        "fp_rate": 0.0,
+        "fn_rate": 0.2222
+      },
+      "apache/hbase": {
+        "total": 928,
+        "false_positives": 281,
+        "false_negatives": 54,
+        "fp_rate": 0.3028,
+        "fn_rate": 0.0582
+      },
+      "apache/hive": {
+        "total": 967,
+        "false_positives": 230,
+        "false_negatives": 71,
+        "fp_rate": 0.2378,
+        "fn_rate": 0.0734
+      },
+      "apache/ignite": {
+        "total": 1126,
+        "false_positives": 202,
+        "false_negatives": 85,
+        "fp_rate": 0.1794,
+        "fn_rate": 0.0755
+      },
+      "apache/kafka": {
+        "total": 832,
+        "false_positives": 239,
+        "false_negatives": 45,
+        "fp_rate": 0.2873,
+        "fn_rate": 0.0541
+      },
+      "apache/spark": {
+        "total": 282,
+        "false_positives": 108,
+        "false_negatives": 3,
+        "fp_rate": 0.383,
+        "fn_rate": 0.0106
+      },
+      "apache/zeppelin": {
+        "total": 202,
+        "false_positives": 56,
+        "false_negatives": 17,
+        "fp_rate": 0.2772,
+        "fn_rate": 0.0842
+      },
+      "apache/zookeeper": {
+        "total": 210,
+        "false_positives": 66,
+        "false_negatives": 3,
+        "fp_rate": 0.3143,
+        "fn_rate": 0.0143
+      }
+    }
+  }
+}

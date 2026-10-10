@@ -1,0 +1,6 @@
+{
+  "High": 0.3,
+  "Medium": 0.18,
+  "Low": 0.0,
+  "derivation": "High tier set at optimal validation threshold 0.3; Medium tier set at 60% of High threshold."
+}
