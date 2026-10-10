@@ -26,6 +26,7 @@ from impactmap.config import (
     MAX_FILES,
 )
 from impactmap.repository import list_recent_commits, safe_clone_repo, validate_and_open_local_repo
+from impactmap.report_generator import ReportExportError, generate_csv_report, generate_json_report
 
 
 st.set_page_config(page_title="ImpactMap", page_icon="IM", layout="wide")
@@ -395,23 +396,27 @@ def _priority_tab(result: AnalysisResult):
                          use_container_width=True, hide_index=True)
 
 
-def _report_tab(result: AnalysisResult):
-    st.markdown("Preview only — report downloads will be added in a later release.")
-    preview = {
-        "repository": safe_text(result.repository_identity),
-        "commit": result.commit_sha,
-        "message": safe_text(result.commit_message),
-        "files_changed": result.diff.files_changed_count,
-        "risk_available": result.prediction.available,
-        "risk_score": result.prediction.score,
-        "risk_tier": result.prediction.tier,
-        "ranked_files": [{"rank": x.rank, "path": safe_text(x.path), "tier": x.priority_tier,
-                          "heuristic_priority_score": x.heuristic_priority_score,
-                          "evidence": x.evidence_level, "reason": safe_text(x.reason)}
-                         for x in result.ranking.files[:50]],
-        "removed_files": [safe_text(x.path) for x in result.ranking.removed],
-        "limitations": LIMITATIONS,
-    }
+def _report_tab(result: AnalysisResult, config: AppConfig, repo: git.Repo):
+    st.markdown("Exports contain sanitized analysis metadata and ranked evidence. Repository file contents, author emails, environment values, and absolute local paths are excluded.")
+    remote_url = None
+    try:
+        if repo.remotes:
+            remote_url = repo.remotes.origin.url
+    except (AttributeError, IndexError, ValueError):
+        remote_url = None
+    try:
+        json_report = generate_json_report(result, config, repository_url=remote_url)
+        csv_report = generate_csv_report(result)
+        preview = json.loads(json_report)
+    except ReportExportError as exc:
+        st.error(f"Export unavailable: {safe_text(exc)}. Review the analysis result and try again.")
+        return
+    left, right = st.columns(2)
+    left.download_button("Download full JSON", data=json_report, file_name=f"impactmap-{result.commit_sha[:12]}.json",
+                         mime="application/json", key="download_json", use_container_width=True)
+    right.download_button("Download ranked files CSV", data=csv_report, file_name=f"impactmap-{result.commit_sha[:12]}-ranked-files.csv",
+                          mime="text/csv", key="download_csv", use_container_width=True)
+    st.markdown("#### Sanitized report preview")
     st.json(preview)
 
 
@@ -507,4 +512,4 @@ else:
     with tabs[4]:
         _priority_tab(result)
     with tabs[5]:
-        _report_tab(result)
+        _report_tab(result, _config_from_controls(), repo)

@@ -1,6 +1,7 @@
 """Shared end-to-end analysis orchestration used by the UI and integration tests."""
 
 from dataclasses import dataclass, field
+from datetime import datetime, timezone
 import logging
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
@@ -36,6 +37,7 @@ class AnalysisResult:
     prediction: PredictionResult
     explanation: ExplanationResult
     ranking: RankingResult
+    analysis_timestamp_utc: str = ""
     warnings: List[str] = field(default_factory=list)
     cache_key: Tuple[str, str, str, str] = ()
 
@@ -88,6 +90,7 @@ def run_analysis(repo: git.Repo, commit_sha: str, config: Optional[AppConfig]) -
         return cached
 
     diff = analyze_commit_diff(repo, commit_sha)
+    analysis_started_at = datetime.now(timezone.utc).isoformat()
     warnings: List[str] = []
     graph = build_dependency_graph(repo, commit_sha, config=cfg)
     if graph.parse_failures:
@@ -154,6 +157,7 @@ def run_analysis(repo: git.Repo, commit_sha: str, config: Optional[AppConfig]) -
         prediction=prediction,
         explanation=explanation,
         ranking=ranking,
+        analysis_timestamp_utc=analysis_started_at,
         warnings=warnings,
         cache_key=key,
     )
